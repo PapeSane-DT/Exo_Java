@@ -1,0 +1,53 @@
+Bugs critiques
+Bug #1 — Comparaison de chaînes
+Utilisation de == au lieu de .equals()
+
+Dans wonPoint(), la comparaison playerName == "player1" compare des références mémoire, pas le contenu. En Java, cela peut retourner false même si la valeur est identique. Il faut utiliser playerName.equals("player1") ou "player1".equals(playerName) (forme préférable car null-safe).
+
+Bug #2 — Noms de joueurs ignorés
+Les paramètres player1Name et player2Name ne sont jamais utilisés
+
+Le constructeur reçoit les vrais noms ("Rafael", "Roger") mais getScore() retourne toujours "Advantage player1" ou "Win for player2" en dur. Les noms enregistrés doivent être injectés dans les messages.
+
+Bug #3 — Score "All" manquant au-delà de Thirty
+Le switch sur égalité s'arrête à case 2 avant le default: "Deuce"
+
+Si les deux joueurs ont 3 points chacun, le code tombe dans le default et affiche "Deuce" — ce qui est correct — mais n'atteint jamais la branche "Forty-All". Ce cas est bien géré par la règle Deuce, mais le commentaire manque dans le code, rendant l'intention obscure.
+
+Avertissements de conception
+Avertissement #1 — Méthode trop longue
+getScore() fait trop de choses à la fois
+
+La méthode gère 3 cas (égalité, avantage/victoire, score normal) avec des if/else et des switch imbriqués. Elle devrait être découpée en méthodes privées : getEqualScore(), getAdvantageScore(), getNormalScore().
+
+Avertissement #2 — Variable tempScore inutilement complexe
+La boucle for (int i=1; i<3; i++) est difficile à lire
+
+Cette boucle simule deux passages (joueur 1 puis joueur 2) avec tempScore comme intermédiaire. La lisibilité serait bien meilleure avec deux appels explicites à une méthode utilitaire : scoreToString(m_score1) + "-" + scoreToString(m_score2).
+
+Avertissement #3 — Nommage non conforme aux conventions Java
+m_score1, m_score2 utilisent la convention C++ hongroise
+
+En Java, les conventions de nommage préconisent score1 / score2 ou mieux player1Score / player2Score. Le préfixe m_ est inhabituel et nuit à la lisibilité.
+
+Améliorations suggérées
+Amélioration #1 — Extraire les libellés dans un tableau
+Les chaînes "Love", "Fifteen", "Thirty", "Forty" sont dupliquées entre les deux blocs switch. Un simple tableau String[] LABELS = {"Love","Fifteen","Thirty","Forty"} élimine la répétition.
+
+Amélioration #2 — Pas de validation des entrées
+wonPoint() incrémente silencieusement m_score2 pour tout nom inconnu (faute de frappe, null…). Une validation explicite avec une exception ou une vérification sur player2Name protégerait l'intégrité du score.
+
+1.1
+Le code implémente un jeu de tennis selon les règles officielles. Voici ce qu'il fait concrètement :
+wonPoint(String playerName)
+Enregistre un point marqué par un joueur. Si le nom est "player1", il incrémente m_score1, sinon m_score2.
+getScore()
+Retourne le score sous forme de texte, avec trois cas :
+
+Égalité (m_score1 == m_score2) → affiche "Love-All", "Fifteen-All", "Thirty-All" ou "Deuce" selon le nombre de points.
+Fin de jeu (au moins 4 points chacun ou plus) → calcule la différence et affiche "Advantage player1/2" ou "Win for player1/2".
+Score normal (pas d'égalité, pas encore en phase avantage) → construit une chaîne du type "Fifteen-Thirty", "Love-Forty", etc., en convertissant les chiffres (0→Love, 1→Fifteen, 2→Thirty, 3→Forty).
+
+
+En résumé, c'est une implémentation du comptage tennis classique :
+Love → Fifteen → Thirty → Forty → Deuce → Avantage → Victoire.
